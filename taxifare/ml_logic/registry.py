@@ -18,8 +18,15 @@ def save_results(params: dict, metrics: dict) -> None:
     "{LOCAL_REGISTRY_PATH}/metrics/{current_timestamp}.pickle"
     - (unit 03 only) if MODEL_TARGET='mlflow', also persist them on MLflow
     """
+    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+    mlflow.set_experiment(experiment_name=MLFLOW_EXPERIMENT)
+
     if MODEL_TARGET == "mlflow":
-        pass  # YOUR CODE HERE
+        if params is not None:
+            mlflow.log_params(params)
+        if metrics is not None:
+            mlflow.log_metrics(metrics)
+        print("✅ Results saved on mlflow")
 
     timestamp = time.strftime("%Y%m%d-%H%M%S")
 
@@ -67,7 +74,12 @@ def save_model(model: keras.Model = None) -> None:
         return None
 
     if MODEL_TARGET == "mlflow":
-        pass  # YOUR CODE HERE
+        mlflow.tensorflow.log_model(model=model,
+                            artifact_path="model",
+                            registered_model_name=MLFLOW_MODEL_NAME
+    )
+        print("✅ Model saved to mlflow")
+
 
     return None
 
@@ -130,7 +142,10 @@ def load_model(stage="Production") -> keras.Model:
 
         # Load model from MLflow
         model = None
-        pass  # YOUR CODE HERE
+        mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+        model_uri = "models:/taxifare_model/Production"
+        model = mlflow.tensorflow.load_model(model_uri=model_uri)
+
         return model
     else:
         return None
